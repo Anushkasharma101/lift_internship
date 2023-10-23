@@ -1,14 +1,14 @@
-class Products {
-  int id;
-  String title;
-  int price;
-  String description;
-  List<String> images;
-  DateTime creationAt;
-  DateTime updatedAt;
-  Category category;
+class Product {
+  final int id;
+  final String title;
+  final int price;
+  final String description;
+  final List<String> images;
+  final DateTime creationAt;
+  final DateTime updatedAt;
+  final Category category;
 
-  Products({
+  Product({
     required this.id,
     required this.title,
     required this.price,
@@ -19,14 +19,26 @@ class Products {
     required this.category,
   });
 
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      title: json['title'],
+      price: json['price'],
+      description: json['description'],
+      images: List<String>.from(json['images']),
+      creationAt: DateTime.parse(json['creationAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      category: Category.fromJson(json['category']),
+    );
+  }
 }
 
 class Category {
-  int id;
-  Name name;
-  String image;
-  DateTime creationAt;
-  DateTime updatedAt;
+  final int id;
+  final String name;
+  final String image;
+  final DateTime creationAt;
+  final DateTime updatedAt;
 
   Category({
     required this.id,
@@ -36,12 +48,13 @@ class Category {
     required this.updatedAt,
   });
 
-}
-
-enum Name {
-  CLOTHES,
-  ELECTRONICS,
-  FURNITURE,
-  OTHERS,
-  SHOES
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'],
+      name: json['name'],
+      image: json['image'],
+      creationAt: DateTime.parse(json['creationAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+    );
+  }
 }

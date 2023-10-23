@@ -1,51 +1,72 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../Models/AllproductsData.dart';
 
-class AllproductController extends GetxController{
-  RxBool isLoading = false.obs;
-  List<Products> products = [];
+class AllProductDataController extends GetxController {
+  // Observables
+  var categories = <String>[].obs;
+  var products = <Product>[].obs;
+
+  // Fetch categories and products
+  Future<void> fetchCategories() async {
+    try {
+      final response = await http.get(Uri.parse('https://api.escuelajs.co/api/v1/categories'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonDataList = json.decode(response.body);
+
+        final List<String> categoryNames = jsonDataList
+            .map((json) => json['name'].toString())
+            .toList();
+        categories.assignAll(categoryNames);
+        if(categories.isNotEmpty){
+          fetchProductsByCategory(categoryNames[0]);
+        }
+        // Fetch products for the first category
+      } else {
+        throw Exception('Failed to fetch categories');
+      }
+    } catch (e) {
+      print('Error fetching categories: $e');
+    }
+  }
 
 
-
-  Future<List<Products>> fetchProductsByCategory(Name category) async {
-
-    final String apiUrl = 'https://api.escuelajs.co/api/v1/products';
-    final Uri uri = Uri.parse(apiUrl);
-    final response = await http.get(uri);
+  Future<List<Product>> fetchProductsByCategory(String category) async {
+    const String apiUrl = 'https://api.escuelajs.co/api/v1/products'; // API endpoint
+    final response = await http.get(Uri.parse(apiUrl));
     if (response.statusCode == 200) {
-      final List<dynamic> productsJson = json.decode(response.body);
-
-      // Filter products by category
-      List<Products> products = productsJson
-          .where((product) =>
-      product['category']['name'] == category.toString().split('.').last)
-          .map((product) => Products(
-        id: product['id'],
-        title: product['title'],
-        price: product['price'],
-        description: product['description'],
-        images: List<String>.from(product['images']),
-        creationAt: DateTime.parse(product['creationAt']),
-        updatedAt: DateTime.parse(product['updatedAt']),
-        category: Category(
-          id: product['category']['id'],
-          name: Name.values.firstWhere((e) =>
-          e.toString().split('.').last == product['category']['name']),
-          image: product['category']['image'],
-          creationAt: DateTime.parse(product['category']['creationAt']),
-          updatedAt: DateTime.parse(product['category']['updatedAt']),
-        ),
-      ))
+      List<dynamic> jsonDataList = json.decode(response.body);
+      List<Product> productList = jsonDataList
+          .map((json) => Product.fromJson(json))
+          .where((product) => product.category.name == category)
           .toList();
-
-      return products;
+      products.assignAll(productList);
+      return productList;// Update the products list
     } else {
-      throw Exception('Failed to load products');
+      throw Exception('Failed to fetch products');
+    }
+  }
+
+  // Fetch product details by ID
+  Future<Product> fetchProductDetails(int productId) async {
+    final apiUrl = 'https://api.escuelajs.co/api/v1/products/$productId';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> productData = json.decode(response.body);
+        final product = Product.fromJson(productData);
+        print('propropro ${product.title}');
+        return product;
+      } else {
+        throw Exception('Failed to fetch product details');
+      }
+    } catch (e) {
+      print('Error: $e');
+      throw e;
     }
   }
 }
